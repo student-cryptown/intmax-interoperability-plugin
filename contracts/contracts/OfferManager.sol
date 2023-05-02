@@ -13,14 +13,10 @@ contract OfferManager is
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    function initialize() public initializer {
+    function initialize() public virtual initializer {
         __Context_init();
     }
 
-    /**
-     * Emits a `OfferRegistered` event with the offer details.
-     * Emits an `OfferTakerUpdated` event with the taker's intmax address and offer ID.
-     */
     function register(
         bytes32 makerIntmaxAddress,
         uint256 makerAssetId,
@@ -29,7 +25,7 @@ contract OfferManager is
         bytes32 takerIntmaxAddress,
         address takerTokenAddress,
         uint256 takerAmount
-    ) external returns (uint256 offerId) {
+    ) external virtual returns (uint256 offerId) {
         // Check if given `takerTokenAddress` is either ETH or ERC20.
         if (takerTokenAddress != address(0)) {
             uint256 totalSupply = IERC20(takerTokenAddress).totalSupply();
@@ -52,9 +48,6 @@ contract OfferManager is
             );
     }
 
-    /**
-     * Emits an `OfferTakerUpdated` event with the new taker's intmax address and offer ID.
-     */
     function updateTaker(
         uint256 offerId,
         bytes32 newTakerIntmaxAddress
@@ -81,9 +74,6 @@ contract OfferManager is
         emit OfferTakerUpdated(offerId, newTakerIntmaxAddress);
     }
 
-    /**
-     * Emits an `OfferActivated` event with the offer ID and the taker's Intmax address.
-     */
     function activate(uint256 offerId) external payable returns (bool) {
         address taker = _offers[offerId].taker;
         if (taker != address(0)) {
@@ -120,9 +110,6 @@ contract OfferManager is
         return true;
     }
 
-    /**
-     * Emits an `OfferDeactivated` event with the offer ID.
-     */
     function deactivate(uint256 offerId) external returns (bool) {
         require(
             _msgSender() == _offers[offerId].maker,
@@ -198,7 +185,7 @@ contract OfferManager is
     }
 
     /**
-     * This function activates a offer.
+     * @dev This function activates a offer.
      * @param offerId is the ID of the offer.
      */
     function _activate(uint256 offerId) internal {
@@ -207,10 +194,10 @@ contract OfferManager is
     }
 
     /**
-     * This function deactivates a offer.
+     * @dev This function deactivates a offer.
      * @param offerId is the ID of the offer.
      */
-    function _deactivate(uint256 offerId) internal {
+    function _deactivate(uint256 offerId) internal virtual {
         _markOfferAsActivated(offerId);
         emit OfferDeactivated(offerId);
     }
@@ -218,11 +205,9 @@ contract OfferManager is
     /**
      * @dev Verify the validity of the offer.
      * @param offer is the offer that needs to be verified.
-     *
-     * Requirements:
-     * - The `makerAmount` in the offer must be less than or equal to `MAX_REMITTANCE_AMOUNT`.
      */
     function _isValidOffer(Offer memory offer) internal pure {
+        // The `makerAmount` in the offer must be less than or equal to `MAX_REMITTANCE_AMOUNT`.
         require(
             offer.makerAmount <= MAX_REMITTANCE_AMOUNT,
             "Invalid offer amount: exceeds maximum remittance amount."
